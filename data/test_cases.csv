@@ -1,0 +1,3 @@
+conversation_id,user_id,channel,expected_user_message,expected_intent,language,expected_ai_reply
+conv-seed-001,user-123,voice,I want to reschedule my appointment,RESCHEDULE_APPOINTMENT,en-US,"Sure — I can help you reschedule your appointment. What date and time would you prefer?"
+conv-seed-002,user-456,voice,My vehicle insurance is expired. Could you please help me out?,GET_VEHICLE_INSURANCE_OFFERS,en-US,"I can help with vehicle insurance options. Please share your vehicle type, location, and preferred coverage to get offers."
