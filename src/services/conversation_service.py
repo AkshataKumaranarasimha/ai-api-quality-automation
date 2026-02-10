@@ -1,5 +1,8 @@
 from src.clients.conversation_api_client import ConversationApiClient
 from src.models.schemas import CreateConversationRequest, MessageRequest, MessageResponse
+from src.utils.logger import get_logger
+
+logger = get_logger("ConversationService")
 
 class ConversationService:
     """
@@ -24,17 +27,22 @@ class ConversationService:
             payload=MessageRequest(message=user_message, language=language)
         )
 
-    def start_and_send(self, user_id: str, channel: str, user_message: str, language: str) -> MessageResponse:
-        # Orchestrates: create conversation -> send message
+    def start_and_send(self, user_id: str, channel: str, user_message: str, language: str):
+        logger.info("Start flow: create conversation")
         conv = self.start_conversation(user_id=user_id, channel=channel)
-        return self.send_user_message(
+
+        logger.info("Send message to conversationId=%s", conv.conversationId)
+        resp = self.send_user_message(
             conversation_id=conv.conversationId,
             user_message=user_message,
-            language=language
+            language=language,
         )
 
+        logger.info("Received aiReply (len=%d) intent=%s confidence=%.2f",
+                    len(resp.aiReply), resp.metadata.intent, resp.metadata.confidence)
+        return resp
 
-'''
+
 if __name__ == "__main__":
     client = ConversationApiClient(mock_mode=True)
     service = ConversationService(client)
@@ -49,4 +57,3 @@ if __name__ == "__main__":
 
     print("\n[SERVICE LAYER OUTPUT]")
     print(resp.model_dump())
-'''
