@@ -1,49 +1,156 @@
-# AI Conversation API – API-Only Automation Framework (Service Layer)
+project:
+  name: "AI Conversation API – API-Only Automation Framework"
+  description: >
+    An API-only automation framework for validating AI Conversation APIs.
+    The framework focuses on semantic quality validation in addition to
+    standard API contract checks.
 
-This project demonstrates an API-only automation framework for an AI Conversation API where a user message triggers an AI reply.
+use_case:
+  overview:
+    - Create a conversation session
+    - Send a user message to the conversation
+    - Validate AI-generated response quality
+  validations:
+    api_contract:
+      - conversationId
+      - userMessage
+    semantic_quality:
+      method: cosine_similarity
+      scope:
+        - intent recognition
+        - AI reply content
+    confidence_rule:
+      description: >
+        Confidence score returned by the API must be greater than or equal
+        to the average semantic similarity score.
+      rule: "confidence >= average_similarity"
 
-## Use case
-- Create a conversation session
-- Send a user message to the conversation
-- Validate:
-  - API contract and deterministic fields (conversationId, userMessage)
-  - Semantic quality using OpenAI embeddings + cosine similarity
-  - Intent recognition quality
-  - Confidence quality (confidence must be >= average semantic similarity score)
+architecture:
+  pattern: service_layer
+  components:
+    tests:
+      responsibility: "Test orchestration and assertions"
+    services:
+      responsibility: "Workflow orchestration (conversation lifecycle)"
+    clients:
+      responsibility: "API and embeddings clients (mock and real)"
+    validators:
+      responsibility: "Semantic scoring and quality rules"
+    utils:
+      responsibility: "CSV loader and logging utilities"
+    data:
+      responsibility: "CSV-driven test cases"
 
-## Architecture
-Service layer pattern for scalability:
-- `tests/` call `services/`
-- `services/` orchestrate workflow across `clients/`
-- `clients/` handle HTTP calls (supports mock mode)
-- `validators/` handle semantic scoring and quality rules
-- `data/` provides CSV-driven test cases
+test_data:
+  source: "data/test_cases.csv"
+  required_columns:
+    - conversation_id
+    - user_id
+    - channel
+    - expected_user_message
+    - expected_intent
+    - language
+  optional_columns:
+    - expected_ai_reply
+  notes: "expected_ai_reply is recommended for semantic reply validation"
 
-## Test data (CSV)
-The suite reads test cases from `data/test_cases.csv`.
-Required columns:
-- `conversation_id`
-- `user_id`
-- `channel`
-- `expected_user_message`
-- `expected_intent`
-- `language` (default: `en-US`)
+mock_mode:
+  enabled_by_default: true
+  base_url: "https://example.com"
+  description: >
+    Mock mode returns seeded responses so the entire automation flow
+    runs end-to-end without a live API.
+  real_environment:
+    steps:
+      - set MOCK_MODE=false
+      - update AI_API_BASE_URL to deployed domain
 
-Optional columns:
-- `expected_ai_reply` (recommended for semantic reply validation)
+setup:
+  environment_configuration:
+    steps:
+      - "cp .env.example .env"
+    offline_execution:
+      recommended: true
+      variables:
+        EMBEDDINGS_PROVIDER: "sklearn"
+        MOCK_MODE: true
+    openai_execution:
+      variables:
+        EMBEDDINGS_PROVIDER: "openai"
+        OPENAI_API_KEY: "<your_openai_api_key>"
+        OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
+      note: >
+        ChatGPT Plus is separate from OpenAI API billing.
+        If API quota is unavailable, use sklearn embeddings.
+  virtual_environment:
+    create:
+      command: "python3 -m venv .venv"
+    activate:
+      command: "source .venv/bin/activate"
+    verify:
+      command: "python --version"
+  dependencies:
+    install:
+      - "python -m pip install -U pip"
+      - "python -m pip install -e ."
 
-## Mock mode (default)
-There is no live API implementation required.
-By default, `AI_API_BASE_URL=https://example.com` and `MOCK_MODE=true`.
-In mock mode, the API client returns seeded responses so the full automation flow runs end-to-end.
+execution:
+  run_all_tests:
+    command: "pytest -s"
+    description:
+      - CSV-driven test execution
+      - Service-layer orchestration
+      - Mock API client usage
+      - Semantic validation (intent + reply)
+      - Confidence vs similarity enforcement
 
-To run against a real environment later:
-- Set `MOCK_MODE=false`
-- Update `AI_API_BASE_URL` to your deployed domain
+reporting:
+  html_report:
+    generate:
+      commands:
+        - "mkdir -p reports"
+        - "pytest -s --html=reports/report.html --self-contained-html"
+    open_mac:
+      command: "open reports/report.html"
+    contents:
+      - test execution results
+      - captured logs
+      - semantic validation output
+      - assertion failures (if any)
 
-## Setup
+logging:
+  approach: structured_logging
+  layers:
+    - services
+    - validators
+  logged_steps:
+    - conversation creation
+    - message submission
+    - AI reply receipt
+    - intent, confidence, and similarity scores
+  visibility:
+    - terminal output
+    - HTML report capture
 
-### 1) Configure environment
-```bash
-cp .env.example .env
-# Add OPENAI_API_KEY in .env
+test_coverage:
+  types:
+    - end_to_end_semantic_validation
+    - api_contract_validation
+    - positive_semantic_quality_tests
+    - negative_quality_guardrail_tests
+
+extensibility:
+  capabilities:
+    - add_new_embedding_providers
+    - add_additional_semantic_rules
+    - extend_csv_with_more_scenarios
+    - switch_from_mock_to_real_api
+    - integrate_with_ci_cd_pipelines
+
+summary:
+  highlights:
+    - API-only automation
+    - Service layer architecture
+    - Semantic similarity scoring
+    - Confidence-based quality enforcement
+    - Scalable, CSV-driven testing
